@@ -5,6 +5,7 @@ import '../screens/create_flashcard_screen.dart';
 import '../screens/practice_screen.dart';
 import '../models/project.dart';
 import 'recently_deleted_screen.dart';
+import '../widgets/home_background_painter.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -369,7 +370,13 @@ class HomeScreen extends StatelessWidget {
       drawer: _buildDrawer(context),
       body: Stack(
         children: [
-          // subtle centered logo background
+          // abstract pen-style background
+          Positioned.fill(
+            child: CustomPaint(
+              painter: HomeBackgroundPainter(),
+            ),
+          ),
+          // subtle centered logo background (original look)
           Positioned.fill(
             child: IgnorePointer(
               child: Opacity(
