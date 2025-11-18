@@ -340,6 +340,12 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<ProjectProvider>(context);
     final cards = provider.flashcardsForSelectedProject();
+    final knownCount = cards.where((c) => c.known).length;
+    final unknownCount = cards.length - knownCount;
+    final categoryCount = provider.rootProjects().length;
+    final recentCards = [...cards]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final visibleCards = recentCards.take(5).toList();
     final currentProject = provider.selectedProjectId == null
       ? null
       : provider.projects
@@ -348,6 +354,8 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        backgroundColor: Colors.black,
+        elevation: 0,
         title: Text(currentProject?.name ?? 'FlashQuanta'),
         actions: [
           if (currentProject != null)
@@ -404,17 +412,66 @@ class HomeScreen extends StatelessWidget {
                       },
                     ),
                     const Spacer(),
-                    Text('Showing ${cards.length} card(s)'),
+                    Text('${cards.length} card(s) total'),
                   ],
                 ),
                 const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: _StatChip(
+                          label: 'Known',
+                          value: knownCount.toString(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: _StatChip(
+                          label: 'Unknown',
+                          value: unknownCount.toString(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: _StatChip(
+                          label: 'Categories',
+                          value: categoryCount.toString(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: Text(
+                      'Recent',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 25
+                          ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Expanded(
                   child: cards.isEmpty
                       ? const Center(child: Text('No flashcards yet.'))
                       : ListView.builder(
-                          itemCount: cards.length,
+                          itemCount: visibleCards.length,
                           itemBuilder: (context, idx) {
-                            final c = cards[idx];
+                            final c = visibleCards[idx];
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 10.0),
                               child: SizedBox(
@@ -533,6 +590,48 @@ class HomeScreen extends StatelessWidget {
           );
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatChip({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container
+    (
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withOpacity(0.06),
+        border: Border.all(color: Colors.white.withOpacity(0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

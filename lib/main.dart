@@ -38,7 +38,12 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
           scaffoldBackgroundColor: Colors.black,
           canvasColor: Colors.black,
-          appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.black,
+            elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+          ),
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.orange,
             primary: Colors.orange,

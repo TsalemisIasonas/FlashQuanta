@@ -136,28 +136,22 @@ class _PracticeScreenState extends State<PracticeScreen> with SingleTickerProvid
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          FilterChip(
+                          _GlassFilterChip(
+                            label: 'All',
                             selected: provider.practiceKnownFilter == null,
-                            label: const Text('All', style: TextStyle(color: Colors.white),),
-                            onSelected: (_) {
-                              provider.practiceKnownFilter = null;
-                            },
+                            onTap: () => provider.practiceKnownFilter = null,
                           ),
                           const SizedBox(width: 8),
-                          FilterChip(
+                          _GlassFilterChip(
+                            label: 'Known',
                             selected: provider.practiceKnownFilter == true,
-                            label: const Text('Known'),
-                            onSelected: (_) {
-                              provider.practiceKnownFilter = true;
-                            },
+                            onTap: () => provider.practiceKnownFilter = true,
                           ),
                           const SizedBox(width: 8),
-                          FilterChip(
+                          _GlassFilterChip(
+                            label: 'Unknown',
                             selected: provider.practiceKnownFilter == false,
-                            label: const Text('Unknown'),
-                            onSelected: (_) {
-                              provider.practiceKnownFilter = false;
-                            },
+                            onTap: () => provider.practiceKnownFilter = false,
                           ),
                         ],
                       ),
@@ -253,6 +247,50 @@ class _PracticeScreenState extends State<PracticeScreen> with SingleTickerProvid
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GlassFilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _GlassFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = selected ? Colors.white.withOpacity(0.18) : Colors.white.withOpacity(0.06);
+    final borderColor = selected ? Colors.white.withOpacity(0.5) : Colors.white.withOpacity(0.18);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            colors: [
+              baseColor,
+              Colors.white.withOpacity(selected ? 0.06 : 0.02),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
       ),
     );
   }
