@@ -112,52 +112,72 @@ class HomeScreen extends StatelessWidget {
             ),
             Divider(color: Colors.grey.shade800, height: 1),
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('New Project'),
-                onPressed: () async {
-                  final nameController = TextEditingController();
-                  await showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      backgroundColor: Colors.grey[900],
-                      title: const Text('Create Project', style: TextStyle(color: Colors.white)),
-                      content: TextField(
-                        controller: nameController,
-                        decoration: const InputDecoration(hintText: 'Project name'),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        foregroundColor: Colors.redAccent,
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(),
-                          child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            final name = nameController.text.trim();
-                            if (name.isNotEmpty) {
-                              await provider.createProject(name);
-                              Navigator.of(ctx).pop();
-                            }
-                          },
-                          child: Text('Create', style: TextStyle(color: colorScheme.primary)),
-                        )
-                      ],
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const RecentlyDeletedScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Bin'),
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        foregroundColor: colorScheme.primary,
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: const Text('New Project'),
+                      onPressed: () async {
+                        final nameController = TextEditingController();
+                        final createdProjectId = await showDialog<String>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: Colors.grey[900],
+                            title: const Text('Create Project', style: TextStyle(color: Colors.white)),
+                            content: TextField(
+                              controller: nameController,
+                              decoration: const InputDecoration(hintText: 'Project name'),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(),
+                                child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final name = nameController.text.trim();
+                                  if (name.isNotEmpty) {
+                                    final project = await provider.createProject(name);
+                                    Navigator.of(ctx).pop(project.id);
+                                  }
+                                },
+                                child: Text('Create', style: TextStyle(color: colorScheme.primary)),
+                              )
+                            ],
+                          ),
+                        );
+                        if (createdProjectId != null) {
+                          provider.selectedProjectId = createdProjectId;
+                          Navigator.of(context).pop();
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
-            TextButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RecentlyDeletedScreen()),
-                );
-              },
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-              label: const Text('Recently deleted', style: TextStyle(color: Colors.redAccent)),
-            ),
-            const SizedBox(height: 12),
           ],
         ),
       ),

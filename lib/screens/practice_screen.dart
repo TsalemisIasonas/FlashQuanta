@@ -97,15 +97,13 @@ class _PracticeScreenState extends State<PracticeScreen> with SingleTickerProvid
     return Scaffold(
       appBar: AppBar(
         title: const Text('Practice'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home),
-            onPressed: () {
-              provider.selectedProjectId = null;
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-          ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.home),
+          onPressed: () {
+                provider.selectedProjectId = null;
+                Navigator.of(context).popUntil((route) => route.isFirst);
+          },
+        ),
         bottom: PreferredSize(
               preferredSize: const Size.fromHeight(1),
           child: Container(
