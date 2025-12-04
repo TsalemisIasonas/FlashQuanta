@@ -21,8 +21,10 @@ class ProjectProvider extends ChangeNotifier {
   String? _selectedProjectId; // null = All
   Set<String> _selectedFlashcardIdsForFilter = {};
 
-  // Practice filter: null = all, true = known only, false = unknown only
-  bool? _practiceKnownFilter;
+  // Practice filters: three explicit states instead of null/true/false
+  bool _practiceShowAll = true;
+  bool _practiceShowKnownOnly = false;
+  bool _practiceShowUnknownOnly = false;
 
   UnmodifiableListView<Project> get projects => UnmodifiableListView(_projects);
   UnmodifiableListView<Flashcard> get flashcards =>
@@ -43,9 +45,28 @@ class ProjectProvider extends ChangeNotifier {
   Set<String> get selectedFlashcardIdsForFilter =>
       _selectedFlashcardIdsForFilter;
 
-  bool? get practiceKnownFilter => _practiceKnownFilter;
-  set practiceKnownFilter(bool? value) {
-    _practiceKnownFilter = value;
+  bool get practiceShowAll => _practiceShowAll;
+  bool get practiceShowKnownOnly => _practiceShowKnownOnly;
+  bool get practiceShowUnknownOnly => _practiceShowUnknownOnly;
+
+  void setPracticeFilterAll() {
+    _practiceShowAll = true;
+    _practiceShowKnownOnly = false;
+    _practiceShowUnknownOnly = false;
+    notifyListeners();
+  }
+
+  void setPracticeFilterKnownOnly() {
+    _practiceShowAll = false;
+    _practiceShowKnownOnly = true;
+    _practiceShowUnknownOnly = false;
+    notifyListeners();
+  }
+
+  void setPracticeFilterUnknownOnly() {
+    _practiceShowAll = false;
+    _practiceShowKnownOnly = false;
+    _practiceShowUnknownOnly = true;
     notifyListeners();
   }
 
@@ -210,10 +231,10 @@ class ProjectProvider extends ChangeNotifier {
           .where((c) => _selectedFlashcardIdsForFilter.contains(c.id))
           .toList();
     }
-    if (_practiceKnownFilter != null) {
-      cards = cards
-          .where((c) => c.known == _practiceKnownFilter)
-          .toList();
+    if (_practiceShowKnownOnly) {
+      cards = cards.where((c) => c.known).toList();
+    } else if (_practiceShowUnknownOnly) {
+      cards = cards.where((c) => !c.known).toList();
     }
     return cards;
   }

@@ -38,6 +38,19 @@ class _PracticeScreenState extends State<PracticeScreen> with SingleTickerProvid
   void didChangeDependencies() {
     super.didChangeDependencies();
     final provider = Provider.of<ProjectProvider>(context);
+    // Always start a practice session on the Unknown tab if there
+    // are any unknown cards. Do this after the first frame to avoid
+    // notifyListeners during build, and leave the current filter if
+    // everything is already known so the user can switch manually.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final p = Provider.of<ProjectProvider>(context, listen: false);
+      final allCards = p.flashcardsForSelectedProject();
+      final hasUnknown = allCards.any((c) => !c.known);
+      if (hasUnknown) {
+        p.setPracticeFilterUnknownOnly();
+      }
+    });
     _cards = provider.flashcardsForPractice();
     _index = 0;
     _showFront = true;
@@ -129,92 +142,113 @@ class _PracticeScreenState extends State<PracticeScreen> with SingleTickerProvid
           ),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: _cards.isEmpty
-                ? const Center(child: Text('No flashcards to practice.'))
-                : Column(
-                    children: [
-                      Row(
+            child: Column(
+              children: [
+                Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _GlassFilterChip(
                             label: 'All',
-                            selected: provider.practiceKnownFilter == null,
-                            onTap: () => provider.practiceKnownFilter = null,
+                            selected: provider.practiceShowAll,
+                            onTap: () {
+                              provider.setPracticeFilterAll();
+                              setState(() {
+                                _index = 0;
+                                _showFront = true;
+                              });
+                            },
                           ),
                           const SizedBox(width: 8),
                           _GlassFilterChip(
                             label: 'Known',
-                            selected: provider.practiceKnownFilter == true,
-                            onTap: () => provider.practiceKnownFilter = true,
+                            selected: provider.practiceShowKnownOnly,
+                            onTap: () {
+                              provider.setPracticeFilterKnownOnly();
+                              setState(() {
+                                _index = 0;
+                                _showFront = true;
+                              });
+                            },
                           ),
                           const SizedBox(width: 8),
                           _GlassFilterChip(
                             label: 'Unknown',
-                            selected: provider.practiceKnownFilter == false,
-                            onTap: () => provider.practiceKnownFilter = false,
+                            selected: provider.practiceShowUnknownOnly,
+                            onTap: () {
+                              provider.setPracticeFilterUnknownOnly();
+                              setState(() {
+                                _index = 0;
+                                _showFront = true;
+                              });
+                            },
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Text('${_index + 1}/${_cards.length}'),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        flex: 3,
-                        child: Center(
-                          child: FractionallySizedBox(
-                            widthFactor: 0.95,
-                            child: GestureDetector(
-                              onHorizontalDragUpdate: (details) {
-                                _dragDx += details.delta.dx;
-                              },
-                              onHorizontalDragEnd: (details) {
-                                // Decide direction based on drag distance so animation always plays
-                                if (_dragDx < -20) {
-                                  // dragged left -> next card (up-right)
-                                  _next();
-                                } else if (_dragDx > 20) {
-                                  // dragged right -> previous card (up-left)
-                                  _prev();
-                                }
-                                _dragDx = 0;
-                              },
-                              child: Stack(
-                                children: [
-                                  // current card (static)
-                                  Positioned.fill(
-                                    child: FlashcardWidget(
-                                      front: _cards[_index].sideA,
-                                      back: _cards[_index].sideB,
-                                      height: double.infinity,
-                                      onFlip: () {},
-                                    ),
-                                  ),
-                                  // outgoing animated card on top, if any
-                                  if (_outgoingIndex != null)
-                                    Positioned.fill(
-                                      child: FadeTransition(
-                                        opacity: _fadeAnimation,
-                                        child: SlideTransition(
-                                          position: _slideAnimation,
-                                          child: FlashcardWidget(
-                                            front: _cards[_outgoingIndex!].sideA,
-                                            back: _cards[_outgoingIndex!].sideB,
-                                            height: double.infinity,
-                                            onFlip: () {},
-                                          ),
-                                        ),
+                const SizedBox(height: 12),
+                if (_cards.isEmpty)
+                  const Expanded(
+                    child: Center(child: Text('No flashcards to practice.')),
+                  )
+                else ...[
+                  Text('${_index + 1}/${_cards.length}'),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    flex: 3,
+                    child: Center(
+                      child: FractionallySizedBox(
+                        widthFactor: 0.95,
+                        child: GestureDetector(
+                          onHorizontalDragUpdate: (details) {
+                            _dragDx += details.delta.dx;
+                          },
+                          onHorizontalDragEnd: (details) {
+                            // Decide direction based on drag distance so animation always plays
+                            if (_dragDx < -20) {
+                              // dragged left -> next card (up-right)
+                              _next();
+                            } else if (_dragDx > 20) {
+                              // dragged right -> previous card (up-left)
+                              _prev();
+                            }
+                            _dragDx = 0;
+                          },
+                          child: Stack(
+                            children: [
+                              // current card (static)
+                              Positioned.fill(
+                                child: FlashcardWidget(
+                                  front: _cards[_index].sideA,
+                                  back: _cards[_index].sideB,
+                                  height: double.infinity,
+                                  onFlip: () {},
+                                ),
+                              ),
+                              // outgoing animated card on top, if any
+                              if (_outgoingIndex != null)
+                                Positioned.fill(
+                                  child: FadeTransition(
+                                    opacity: _fadeAnimation,
+                                    child: SlideTransition(
+                                      position: _slideAnimation,
+                                      child: FlashcardWidget(
+                                        front: _cards[_outgoingIndex!].sideA,
+                                        back: _cards[_outgoingIndex!].sideB,
+                                        height: double.infinity,
+                                        onFlip: () {},
                                       ),
                                     ),
-                                ],
-                              ),
-                            ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       ElevatedButton.icon(
                         onPressed: () {
                           // mark as unknown (known = false)
@@ -223,8 +257,14 @@ class _PracticeScreenState extends State<PracticeScreen> with SingleTickerProvid
                           provider.updateFlashcard(card);
                           _next();
                         },
-                        icon: const Icon(Icons.close, color: Colors.white,),
-                        label: const Text('Unknown', style: TextStyle(color: Colors.white),),
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Unknown',
+                          style: TextStyle(color: Colors.white),
+                        ),
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                       ),
                       const SizedBox(width: 12),
@@ -236,15 +276,22 @@ class _PracticeScreenState extends State<PracticeScreen> with SingleTickerProvid
                           provider.updateFlashcard(card);
                           _next();
                         },
-                        icon: const Icon(Icons.check, color: Colors.white,),
-                        label: const Text('Known', style: TextStyle(color: Colors.white),),
+                        icon: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Known',
+                          style: TextStyle(color: Colors.white),
+                        ),
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                       ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                ],
+              ],
+            ),
           ),
         ],
       ),
